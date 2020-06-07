@@ -9,14 +9,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
 #include "mish.h"
 
 int cnt = 0;
 
-int
-main(
-		int argc,
-		const char * argv[])
+int main()
 {
 	mish_prepare(0);
 
@@ -28,15 +26,10 @@ main(
 
 
 /* And here is a command line action that can reset the 'cnt' variable */
-static void
-_test_set_cnt(
-		void * param,
-		int argc,
-		const char * argv[])
+static void _test_set_cnt(void * param, int argc, const char * argv[])
 {
 	if (argc > 1) {
-		int v = atoi(argv[1]);
-		cnt = v;
+		cnt = atoi(argv[1]);
 	} else {
 		fprintf(stderr,
 				"%s: syntax 'set XXX' to set the variable\n", argv[0]);

@@ -267,7 +267,6 @@ redraw:
 			if (c->sending->err)
 				_mish_send_queue(c, MISH_COLOR_RED);
 			_mish_send_queue_line(c, c->sending);
-		//	_mish_send_queue(c, "\r"); // \n is LF, need a CR too
 			if (c->sending->err)
 				_mish_send_queue(c, "\033[m");
 			// if we reach the bottom mark, stop
@@ -276,9 +275,10 @@ redraw:
 		} while (c->sending &&
 				(c->output.total - start) <= screen_worth);
 		// update cursor position here -- SHOULD update it with each lines,
-		// to handle word wrapping, but for not it's OK
+		// to handle word wrapping, but for now it's OK
+		// TODO: Update cursor V pos handling line wrap
 		if (!c->sending)
-			c->current_vpos = c->window_size.h - 2;
+			c->current_vpos = c->window_size.h - c->footer_height;
 		/* Restore the cursor to the prompt area */
 		_mish_send_queue(c, "\033[u");
 	} while(1);

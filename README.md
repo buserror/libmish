@@ -4,6 +4,53 @@
 
 You can then add your own commands to interract with your (running) program. Oh, *libmish* can also serve this to incoming telnet sessions (on a custom port), so you can connect to detached processes too.
 
+## Demo
+Consider this program. The only "new" things are the <u>#include</u>, and the <u>mish_prepare()</u> call. That gives you telnet access and will log all output, but not much else.
+
+```C
+#include "mish.h"
+
+int cnt = 0;
+
+int main()
+{
+	mish_prepare(0);
+
+	while (1) {
+		sleep(1);
+		printf("Count %d\n", cnt++);
+	}
+}
+```
+
+Now add this at the bottom of the file:
+
+```C
+/* And here is a command line action that can reset the 'cnt' variable */
+static void _test_set_cnt(void * param, int argc, const char * argv[])
+{
+	if (argc > 1) {
+		cnt = atoi(argv[1]);
+	} else {
+		fprintf(stderr,
+				"%s: syntax 'set XXX' to set the variable\n", argv[0]);
+	}
+}
+
+MISH_CMD_NAMES(set, "set");
+MISH_CMD_HELP(set,
+		"set 'cnt' variable",
+		"test command for libmish!");
+MISH_CMD_REGISTER(set, _test_set_cnt);
+```
+
+And here you go:
+![Demo of libmish](demo.gif)
+
+As you can see, the stderr output is colorized. The program also told you the telnet port to call into (but you can also see it via the 'env' command later on).
+
+Calling the 'set' command will change the main variable. Of course it doesn't been to be thread safe in this instance, if you want your command to run in a thread safe way, you have to use <u>mish_cmd_poll()</u> from your thread, this will run pending commands in your own context.
+
 ## Ok what's going on here, why do I need this?
 Let's say, you have that program that runs for days. Or months, or years, and it has it's log in a log file and all is very well, but sometime, you'd like to just *interract* with it, say, check statistics, internal state, or just change a parameter or so. Or just pet it for the good job it's doing.
 
@@ -43,14 +90,16 @@ This is a brand new library, a whole ton of things works, but quite a few things
 
 Some bits I know I want but didn't *need* and some I've tried to fix, but haven't spent enough time on it to nail them down.
 
-###TODO:
+**TODO:**
+
   * Currently the main thread uses select(), because it's portable. Need to add an epool() alternative one for linux.
   * Display a timestamp for lines in the backlog.
   * Display some sort of progressy-bar thing at the bottom when navigating the log.
   * Add a UNIX stream socket access, but we'll have to use socat/netcat, stty raw and some sort of helper command line.
   * Make the backlog expire after X hours/days. A stamp is already collected, but not used.
 
-###BUGS:
+**BUGS:**
+
 * Find a way to cleany quit without screwing up the terminal settings (telnet).
     - If you have that problem, use 'resize' or 'reset' to make your terminal work again.
     - Or better, use 'screen telnet xxx yyy' as screen is awesome at cleaning up.
