@@ -9,6 +9,7 @@
 #ifndef LIBMISH_SRC_MISH_PRIV_H_
 #define LIBMISH_SRC_MISH_PRIV_H_
 
+#include <sys/select.h>
 #include <stdint.h>
 #include <pthread.h>
 #include <termios.h>

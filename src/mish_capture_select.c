@@ -8,7 +8,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/select.h>
 
 #include "mish_priv.h"
 #include "mish.h"

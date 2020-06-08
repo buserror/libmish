@@ -10,8 +10,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pty.h>
 #include <unistd.h> // for isatty etc
+
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#include <util.h>	// for openpty
+#endif
+
+#ifdef __linux__
+#include <pty.h>
+#endif
 
 #include "mish_priv.h"
 #include "mish.h"
@@ -23,7 +32,17 @@ uint64_t
 _mish_stamp_ms()
 {
 	struct timespec tim;
-	clock_gettime(CLOCK_REALTIME_COARSE, &tim);
+#ifdef __MACH__
+	clock_serv_t cclock;
+	mach_timespec_t mts;
+	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+	clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
+	tim.tv_sec = mts.tv_sec;
+	tim.tv_nsec = mts.tv_nsec;
+#else
+	clock_gettime(CLOCK_REALTIME, &tim);
+#endif
 
 	uint64_t res = (tim.tv_sec * 1000) + (tim.tv_nsec / 1000000);
 	return res;
