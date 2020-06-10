@@ -45,7 +45,7 @@ MISH_CMD_REGISTER(set, _test_set_cnt);
 ```
 
 And here you go:
-![Demo of libmish](demo.gif)
+![Demo of libmish](doc/demo.gif)
 
 As you can see, the stderr output is colorized. The program also told you the telnet port to call into (but you can also see it via the 'env' command later on).
 
