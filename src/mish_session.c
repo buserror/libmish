@@ -189,7 +189,8 @@ mish_terminate(
 	if (m->capture) {
 		m->flags |= MISH_QUIT;
 		// this will wake the select() call from sleep
-		write(1, "\n", 1);
+		if (write(1, "\n", 1))
+			;
 
 		time_t start = time(NULL);
 		time_t now;

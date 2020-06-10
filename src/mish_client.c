@@ -81,7 +81,8 @@ mish_client_delete(
 		}
 	}
 	const char * restore = "\033[4l\033[;r\033[999;1H";
-	write(c->output.fd, restore, strlen(restore));
+	if (write(c->output.fd, restore, strlen(restore)))
+		;
 	close(c->output.fd);
 
 	TAILQ_REMOVE(&m->clients, c, self);
