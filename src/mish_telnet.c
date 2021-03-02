@@ -141,6 +141,8 @@ _mish_telnet_parse(
 	return 0;
 }
 
+extern const char *__progname;
+
 /*
  * not going to go thru all the bits regarding sockets here, you know it.
  *
@@ -149,7 +151,8 @@ _mish_telnet_parse(
  */
 int
 mish_telnet_prepare(
-		mish_p m)
+		mish_p m,
+		uint16_t port)
 {
 	m->telnet.listen = socket(AF_INET, SOCK_STREAM, 0);
 	int flag = 1;
@@ -162,11 +165,23 @@ mish_telnet_prepare(
 		.sin_family = AF_INET,
 		.sin_addr.s_addr = htonl(INADDR_LOOPBACK),
 	};
+	// attempts to generate a pseudo random port based on the executable name
+	// before having to rely on random(). This gives a chance of 'unique' ports
+	// per programs.
+	if (port == 0) {
+		for (int i = 0; __progname[i]; i++)
+			port += __progname[i] + i;
+		if (port < 1024)
+			port += 1024;
+		port = port & 0x3fff;
+	}
+
 	int tries = 3;
 	do {
-		b.sin_port = htons(1024 + ((random() & 0x3ff)));
+		b.sin_port = htons(port);
 		if (bind(m->telnet.listen, (struct sockaddr *)&b, sizeof(b)) == -1) {
-			fprintf(stderr, "%s failed %d\n", __func__, ntohs(b.sin_port));
+			fprintf(stderr, "%s can't bind %d\n", __func__, ntohs(b.sin_port));
+			port = port + (random() & 0x3ff);
 			continue;
 		}
 		m->telnet.port = ntohs(b.sin_port);

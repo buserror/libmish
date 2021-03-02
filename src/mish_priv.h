@@ -224,7 +224,8 @@ _mish_stamp_ms();
  */
 int
 mish_telnet_prepare(
-		mish_p m);
+		mish_p m,
+		uint16_t port);
 int
 mish_telnet_in_check(
 		mish_p m,

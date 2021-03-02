@@ -69,6 +69,7 @@ mish_prepare(
 	 */
 	if (getenv("MISH_OFF")) {
 		if (atoi(getenv("MISH_OFF"))) {
+			unsetenv("MISH_TELNET_PORT");
 			printf("mish: Disabled my MISH_OFF\n");
 			return NULL;
 		}
@@ -112,7 +113,11 @@ mish_prepare(
 			perror("tcsetattr");
 	}
 	if (!(caps & MISH_CAP_NO_TELNET)) {
-		if (mish_telnet_prepare(m) == 0) {
+		uint16_t port = 0; // suggested telnet port
+		if (getenv("MISH_TELNET_PORT"))
+			port = atoi(getenv("MISH_TELNET_PORT"));
+
+		if (mish_telnet_prepare(m, port) == 0) {
 			char port[8];
 			snprintf(port, sizeof(port), "%d", m->telnet.port);
 			setenv("MISH_TELNET_PORT", port, 1);
