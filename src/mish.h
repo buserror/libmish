@@ -45,9 +45,14 @@ mish_terminate(
 		struct mish_t * m);
 
 /*
- * Register a command; please use the macros, don't call this directly
+ * Register a command; please use the macros, don't call this directly.
+ *
+ * Symbol is weak, so you can have mish commands in a dynamic library,
+ * without having to drag libmish into programs that use it; the commands
+ * won't register, but if you then link with a program that uses libmish,
+ * they will.
  */
-void
+void __attribute__((weak))
 mish_register_cmd(
 		const char ** cmd_names,
 		const char ** cmd_help,
@@ -86,13 +91,15 @@ mish_cmd_poll();
 #define MISH_CMD_REGISTER(_d, _handler) \
 	__attribute__((constructor,used)) \
 	static void _mish_register_##_d() { \
-		mish_register_cmd(_cmd_##_d,_help_##_d,_handler,0,0);\
+		if (mish_register_cmd) \
+			mish_register_cmd(_cmd_##_d,_help_##_d,_handler,0,0);\
 	}
 //! These are called when the main program calls mish_cmd_poll()
 #define MISH_CMD_REGISTER_SAFE(_d, _handler) \
 	__attribute__((constructor,used)) \
 	static void _mish_register_##_d() { \
-		mish_register_cmd(_cmd_##_d,_help_##_d,_handler,0,1);\
+		if (mish_register_cmd) \
+			mish_register_cmd(_cmd_##_d,_help_##_d,_handler,0,1);\
 	}
 
 #endif /* LIBMISH_SRC_MISH_H_ */

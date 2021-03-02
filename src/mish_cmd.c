@@ -37,7 +37,7 @@ DEFINE_FIFO(mish_cmd_call_t, mish_call_queue);
 static TAILQ_HEAD(,mish_cmd_t) _cmd_list = TAILQ_HEAD_INITIALIZER(_cmd_list);
 static mish_call_queue_t _cmd_fifo = {0};
 
-void
+void __attribute__((weak))
 mish_register_cmd(
 		const char ** cmd_names,
 		const char ** cmd_help,
