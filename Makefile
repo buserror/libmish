@@ -49,7 +49,7 @@ $(LIB)/$(TARGET).so.$(SOV) : $(LIBOBJ) | $(LIB)/$(TARGET).a
 # has no problem!!
 #$(BIN)/%: | shared
 $(TOOLS) $(TESTS): | shared
-$(BIN)/%: LDFLAGS_TARGET = -lmish
+$(BIN)/%: LDFLAGS_TARGET = -lmish -lrt
 
 
 install:
