@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <errno.h>
 #include "mish_priv.h"
 #include "mish.h"
 
@@ -35,8 +35,15 @@ _mish_capture_select(
 		fd_set r = m->select.read;
 		fd_set w = m->select.write;
 		struct timeval tv = { .tv_sec = 1 };
-		/*int max =*/ select(m->select.max, &r, &w, NULL, &tv);
-
+		int max = select(m->select.max, &r, &w, NULL, &tv);
+		if (max == 0)
+			continue;
+		if (max == -1) {
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			// real error here?
+			continue;
+		}
 		/* check the telnet listen socket */
 		mish_telnet_in_check(m, &r);
 		/*
