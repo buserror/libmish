@@ -310,7 +310,8 @@ _mish_client_dumb_cr(
 				// we WERE at the bottom, so find a possible next line
 				mish_line_p next = TAILQ_NEXT(c->bottom, self);
 				if (next) {
-					c->bottom = c->sending = next;
+					c->sending = next;
+					c->bottom = TAILQ_LAST(&m->backlog.log, mish_line_queue_t);
 				}
 			}
 		}
