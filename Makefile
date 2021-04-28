@@ -32,6 +32,9 @@ TESTS 			= ${BIN}/mish_test \
 
 all : tools tests
 
+debug: all ${BIN}/mish_debug_test
+	@echo "*** mish_debug_test is dangerous, do not install anywhere"
+
 .PHONY: static shared tools tests
 static: $(LIB)/$(TARGET).a
 shared: ${LIB}/$(TARGET).so.$(SOV)
