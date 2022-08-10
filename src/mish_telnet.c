@@ -176,7 +176,7 @@ mish_telnet_prepare(
 		port = port & 0x3fff;
 	}
 
-	int tries = 3;
+	int tries = 5;
 	do {
 		b.sin_port = htons(port);
 		if (bind(m->telnet.listen, (struct sockaddr *)&b, sizeof(b)) == -1) {
