@@ -121,7 +121,8 @@ mish_prepare(
 			char port[8];
 			snprintf(port, sizeof(port), "%d", m->telnet.port);
 			setenv("MISH_TELNET_PORT", port, 1);
-		}
+		} else
+			unsetenv("MISH_TELNET_PORT");
 	}
 
 	// backup the existing descriptors, to make a 'client', we replace
