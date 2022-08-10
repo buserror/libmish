@@ -34,20 +34,14 @@ typedef TAILQ_HEAD(mish_line_queue_t, mish_line_t)	mish_line_queue_t;
 /*
  * mish_line tools
  */
-mish_line_p
+int
 _mish_line_reserve(
-		mish_line_p line,
+		mish_line_p *line,
 		uint32_t count);
 mish_line_p
-_mish_line_split(
+_mish_line_add(
 		mish_line_queue_t * q,
-		mish_line_p line,
+		char * buffer,
 		size_t length );
-mish_line_p
-_mish_line_reserve_or_split(
-		mish_line_queue_t * q,
-		mish_line_p l,
-		size_t size );
-
 
 #endif /* LIBMISH_SRC_MISH_PRIV_LINE_H_ */

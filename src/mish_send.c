@@ -127,7 +127,7 @@ _mish_send_prep(
 	}
 	c->output.total += l;
 	/* allocate enough in the character buffer */
-	c->output.sqb = _mish_line_reserve(c->output.sqb, l + 1);
+	_mish_line_reserve(&c->output.sqb, l + 1);
 	/* allocate enough in the vector buffer */
 	if (c->output.count == c->output.size) {
 		c->output.size += 8;

@@ -15,6 +15,11 @@
 #include "mish_priv.h"
 #include "mish_priv_line.h"
 
+#ifdef MISH_INPUT_TEST
+#define D(_w) _w
+#else
+#define D(_w)
+#endif
 
 void
 _mish_input_init(
@@ -68,9 +73,11 @@ _mish_input_read(
 {
 	if (!FD_ISSET(in->fd, fds))
 		return 0;
-	size_t start = in->line ? in->line->len : 0;
 	do {
-		in->line = _mish_line_reserve_or_split(&in->backlog, in->line, 80);
+		if (_mish_line_reserve(&in->line, 80)) {
+			D(printf("  reserve bailed us\n");)
+			break;
+		}
 		ssize_t rd = read(in->fd,
 						in->line->line + in->line->len,
 						in->line->size - in->line->len - 1);
@@ -87,10 +94,20 @@ _mish_input_read(
 		}
 		in->line->len += rd;
 	} while (1);
-	uint8_t * s = (uint8_t*) in->line->line + start;
-	uint8_t * d = (uint8_t*) in->line->line + in->line->done;
-	int added = in->line->len - start;
-
+	uint8_t * s = (uint8_t*) in->line->line + in->line->done;
+	uint8_t * d = s;
+	int added = in->line->len - in->line->done;
+	D(printf(" buffer added %d done %d len %d size %d\n", added,
+			(int)in->line->done, (int)in->line->len, (int)in->line->size);
+	if (in->line->done)
+		printf("    buffer: '%.*s'\n", in->line->done, in->line->line);)
+	/*
+	 * This loop re-parse the data, passes it to the optional handler,
+	 * and then store processed lines into the backlog. This is not super
+	 * optimal in the case there isn't a process_char() callback, so perhaps
+	 * I should make another less 'generic' input parser that doesn't copy
+	 * stuff around (in place, often).
+	 */
 	while (added) {
 		int r = MISH_IN_STORE;
 		if (in->process_char)
@@ -99,19 +116,24 @@ _mish_input_read(
 			r = *s == '\n' ? MISH_IN_SPLIT : MISH_IN_STORE;
 
 		if (r == MISH_IN_STORE || r == MISH_IN_SPLIT) {
-			if (d != s)
-				*d++ = *s;
-			else d++;
+			*d++ = *s;
 			in->line->done++;
 		}
 		if (r == MISH_IN_SPLIT) {
-			in->line = _mish_line_split(&in->backlog, in->line, in->line->done);
+			D(printf("  split size %d remains %d : '%.*s'\n", in->line->done,
+					(int)added, in->line->done-1, in->line->line);)
+			_mish_line_add(&in->backlog, in->line->line, in->line->done);
 			d = (uint8_t*)in->line->line;
 			in->line->len = in->line->done = 0;
 		}
 		s++; added--;
 	}
 	*d = 0; // NUL terminate for debug purpose!
+	D(printf(" exit added %d done %d len %d size %d\n", added,
+			(int)in->line->done, (int)in->line->len, (int)in->line->size);
+	in->line->len = in->line->done;
+	if (in->line->done)
+		printf("    buffer: '%s'\n", in->line->line);)
 
 	return TAILQ_FIRST(&in->backlog) != NULL;
 }

@@ -54,6 +54,11 @@ $(LIB)/$(TARGET).so.$(SOV) : $(LIBOBJ) | $(LIB)/$(TARGET).a
 $(TOOLS) $(TESTS): | shared
 $(BIN)/%: LDFLAGS_TARGET = -lmish -lrt
 
+$(BIN)/mish_input_test: LDFLAGS_TARGET =
+
+clean::
+	rm -f $(LIB)/$(TARGET).* $(TOOLS) $(TESTS)
+
 
 install:
 	mkdir -p $(DESTDIR)/bin/ $(DESTDIR)/lib/ $(DESTDIR)/include/

@@ -87,18 +87,26 @@ mish_cmd_poll();
 	static const char * _cmd_##_n[] = { args, 0 }
 #define MISH_CMD_HELP(_n, args...) \
 	static const char * _help_##_n[] = { args, 0 }
+/* This gymnastic is required becase GCC has decided that it'll ignore
+ * ((weak)) symbols can be NULL, and throw me an error instead */
+static inline int _gcc_warning_false_pos_workaround(void * func) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress"
+	return func != NULL;
+#pragma GCC diagnostic pop
+}
 //! These are called on libmish thread, immediately.
 #define MISH_CMD_REGISTER(_d, _handler) \
 	__attribute__((constructor,used)) \
 	static void _mish_register_##_d() { \
-		if (mish_register_cmd) \
+		if (_gcc_warning_false_pos_workaround(mish_register_cmd)) \
 			mish_register_cmd(_cmd_##_d,_help_##_d,_handler,0,0);\
 	}
 //! These are called when the main program calls mish_cmd_poll()
 #define MISH_CMD_REGISTER_SAFE(_d, _handler) \
 	__attribute__((constructor,used)) \
 	static void _mish_register_##_d() { \
-		if (mish_register_cmd) \
+		if (_gcc_warning_false_pos_workaround(mish_register_cmd)) \
 			mish_register_cmd(_cmd_##_d,_help_##_d,_handler,0,1);\
 	}
 

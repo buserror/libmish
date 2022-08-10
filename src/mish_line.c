@@ -11,64 +11,49 @@
 #include "mish_priv.h"
 #include "mish_priv_line.h"
 
-/*
- * Here we duplicate length bytes of the line, queue that, and reset
- * the original line with what remains.
- * Did that so the input line 'grows' one way, and stays grown, while
- * the one we queue gets 'trimmed' down to size.
- */
+static const mish_line_t zero = {};
+
 mish_line_p
-_mish_line_split(
+_mish_line_add(
 		mish_line_queue_t * q,
-		mish_line_p line,
+		char * buffer,
 		size_t length )
 {
-	static const mish_line_t zero = {};
-	size_t l = line->len + 1;
+	size_t l = length + 1;
 	mish_line_p nl = (mish_line_p)malloc(sizeof(*nl) + l);
 	*nl = zero;
 	nl->size = l;
-	nl->len = l - 1;
-	memcpy(nl->line, line->line, l);
+	nl->len = length;
+	memcpy(nl->line, buffer, length);
 	nl->line[l] = 0;
 	nl->stamp = _mish_stamp_ms();
 	TAILQ_INSERT_TAIL(q, nl, self);
-	line->len = 0;
-	return line;
+	return nl;
 }
 
-/*
- * Make sure the size of a line doesn't grow over MISH_MAX_LINE_SIZE
- */
-mish_line_p
-_mish_line_reserve_or_split(
-		mish_line_queue_t * q,
-		mish_line_p l,
-		size_t size )
-{
-	if (l && (l->size - l->len) >= size)
-		return l;
-	if (!l || ((l->size + size) < MISH_MAX_LINE_SIZE))
-		return _mish_line_reserve(l, size);
-
-	return _mish_line_split(q, l, l->len);
-}
-
-mish_line_p
+int
 _mish_line_reserve(
-		mish_line_p line,
+		mish_line_p *line,
 		uint32_t count)
 {
+	if (!line)
+		return -1;
+	mish_line_p l = *line;
 	if (count < 40)
 		count = 40;
-	if (!line) {
-		line = (mish_line_p)calloc(1, sizeof(mish_line_t) + count);
-		line->size = count;
+	if (!l) {
+		l = (mish_line_p)calloc(1, sizeof(mish_line_t) + count);
+		*l = zero;
+		l->size = count;
+		*line = l;
 	}
-	if (line->size - line->len < count) {
-		line = (mish_line_p)realloc(line,
-							sizeof(mish_line_t) + line->size + count);
-		line->size += count;
+	if (l->size + count >= MISH_MAX_LINE_SIZE)
+		return 1;
+	if (l->size - l->len < count) {
+		l = (mish_line_p)realloc(l,
+							sizeof(mish_line_t) + l->size + count);
+		l->size += count;
+		*line = l;
 	}
-	return line;
+	return 0;
 }

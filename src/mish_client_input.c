@@ -48,7 +48,7 @@ _mish_client_vt_parse_input(
 			continue;
 		// if no command is editing, create an empty one, add it to history
 		if (!c->cmd) {
-			c->cmd = _mish_line_reserve(c->cmd, 4);
+			_mish_line_reserve(&c->cmd, 4);
 			TAILQ_INSERT_TAIL(&in->backlog, c->cmd, self);
 		} else {
 			/*
@@ -58,7 +58,7 @@ _mish_client_vt_parse_input(
 			if (c->cmd->size - c->cmd->len <= 4) {
 				mish_line_p next = TAILQ_NEXT(c->cmd, self);
 				TAILQ_REMOVE(&in->backlog, c->cmd, self);
-				c->cmd = _mish_line_reserve(c->cmd, 4);
+				_mish_line_reserve(&c->cmd, 4);
 				TAILQ_INSERT_BEFORE(next, c->cmd, self);
 			}
 		}
