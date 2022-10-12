@@ -59,7 +59,10 @@ _mish_client_vt_parse_input(
 				mish_line_p next = TAILQ_NEXT(c->cmd, self);
 				TAILQ_REMOVE(&in->backlog, c->cmd, self);
 				_mish_line_reserve(&c->cmd, 4);
-				TAILQ_INSERT_BEFORE(next, c->cmd, self);
+				if (next)
+					TAILQ_INSERT_BEFORE(next, c->cmd, self);
+				else
+					TAILQ_INSERT_TAIL(&in->backlog, c->cmd, self);
 			}
 		}
 		switch (c->vts.seq) {
