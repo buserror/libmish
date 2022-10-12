@@ -115,39 +115,56 @@ mish_argv_make(
 	char *dup = strdup(line);
 	int i = 0;
 	char ** av = NULL;
+	int state = 0;
+	char start;
+	enum { s_newarg, s_startarg, s_copyq, s_skip, s_copynq };
 	do {
-		av = realloc(av, (i + 2) * sizeof(char*));
-		char *p = NULL;
-		/* handle single + double quotes */
-		if (dup && (*dup == '"' || *dup == '\'')) {
-			char * start = dup;
-			char *s = start + 1;
-			char last = 0;
-			while (*s) {
-				if (last == '\\')
-					s++;
-				else if (*s == *start) {
-					s++;
+		switch (state) {
+			case s_newarg:
+				av = realloc(av, (i + 2) * sizeof(char*));
+				while (*dup == ' ')
+					dup++;
+				av[i++] = dup;
+				state = s_startarg;
+				break;
+			case s_startarg:
+				if (*dup == '"' || *dup == '\'') {
+					start = *dup++;
+					state = s_copyq;
+				} else
+					state = s_copynq;
+				break;
+			case s_copyq:
+				if (*dup == '\\')
+					state = s_skip;
+				else if (*dup == start) {
+					state = s_newarg;
+					dup++;
+					if (*dup) *dup++ = 0;
+				} else if (*dup)
+					dup++;
+				break;
+			case s_skip:
+				dup++;
+				state = s_copyq;
+				break;
+			case s_copynq:
+				if (*dup == 0)
 					break;
+				if (*dup != ' ')
+					dup++;
+				else {
+					state = s_newarg;
+					if (*dup) *dup++ = 0;
 				}
-				last = *s++;
-			}
-			if (*s) {
-				*s = 0;
-				dup = s + 1;
-				p = start;
-			}
-		} else
-			p = strsep(&dup, " ");
-		if (p) {
-			av[i++] = p;
-			av[i] = NULL;
-		} else
-			break;
-	} while (1);
+				break;
+		}
+	} while (*dup);
+	av[i] = NULL;
 	*argc = i;
 	return av;
 }
+
 /*
  * Free memory allocated by a mish_argv_make
  */
