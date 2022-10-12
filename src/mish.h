@@ -52,13 +52,13 @@ mish_terminate(
  * won't register, but if you then link with a program that uses libmish,
  * they will.
  */
-void __attribute__((weak))
+void
 mish_register_cmd(
 		const char ** cmd_names,
 		const char ** cmd_help,
 		mish_cmd_handler_p cmd_handler,
 		void * handler_param,
-		int safe);
+		int safe) __attribute__((weak));
 /*!
  * Poll the mish threads for pending commands, and call their handlers.
  * This is only necessary for 'safe' commands that needs to be run on the
