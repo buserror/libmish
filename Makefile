@@ -13,7 +13,10 @@ PKG				= 1
 TARGET			= libmish
 DESC			= Program Shell Access
 
-BASE_LDFLAGS	:= -lutil -lpthread
+ifneq ($(CC), emcc)
+BASE_LDFLAGS	+= -lutil
+endif
+BASE_LDFLAGS	+= -lpthread
 EXTRA_LDFLAGS	= $(BASE_LDFLAGS)
 
 # Auto load all the .c files dependencies, and object files
@@ -52,7 +55,10 @@ $(LIB)/$(TARGET).so.$(SOV) : $(LIBOBJ) | $(LIB)/$(TARGET).a
 # has no problem!!
 #$(BIN)/%: | shared
 $(TOOLS) $(TESTS): | shared
-$(BIN)/%: LDFLAGS_TARGET = -lmish -lrt
+ifeq ($(CC), emcc)
+$(BIN)/%: LDFLAGS_TARGET+=-L${LIB}
+endif
+$(BIN)/%: LDFLAGS_TARGET += -lmish -lrt
 
 $(BIN)/mish_input_test: LDFLAGS_TARGET =
 

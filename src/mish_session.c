@@ -90,6 +90,7 @@ mish_prepare(
 				(caps & MISH_CAP_FORCE_PTY);
 	int io[2];	// stdout pipe
 	int ie[2];	// stderr pipe
+#if !defined(__wasm__)
 	{
 		char pty[80];
 		if (openpty(&io[0], &io[1], pty, NULL, NULL) == -1) {
@@ -112,6 +113,7 @@ mish_prepare(
 		if (tcsetattr(0, TCSAFLUSH, &raw))
 			perror("tcsetattr");
 	}
+#endif
 	if (!(caps & MISH_CAP_NO_TELNET)) {
 		uint16_t port = 0; // suggested telnet port
 		if (getenv("MISH_TELNET_PORT"))
@@ -188,9 +190,11 @@ mish_terminate(
 	dup2(m->originals[1], 2);
 	// the thread does this, but we also do it in case this function is
 	// called from another exit(x)
+#if !defined(__wasm__)
 	if ((m->flags & MISH_CONSOLE_TTY) &&
 			tcsetattr(0, TCSAFLUSH, &m->orig_termios))
 		perror("mish_terminate tcsetattr");
+#endif
 	close(m->originals[0]); close(m->originals[1]);
 	if (m->capture) {
 		m->flags |= MISH_QUIT;
