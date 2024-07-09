@@ -155,7 +155,7 @@ _mish_client_interractive_cr(
 	if (!(c->flags & MISH_CLIENT_HAS_WINDOW_SIZE)) {
 		printf("mish: no window size, falling back to dumb scrollback\n");
 		c->cr.process = _mish_client_dumb_cr;
-		pt_end(c->cr.state);
+		goto finish;
 	}
 	/* We are live scrolling, and we are at the last line of scrollback */
 	c->flags |= MISH_CLIENT_INIT_SENT | MISH_CLIENT_SCROLLING;
@@ -283,7 +283,7 @@ redraw:
 		/* Restore the cursor to the prompt area */
 		_mish_send_queue(c, "\033[u");
 	} while(1);
-
+finish:
 	pt_end(c->cr.state);
 }
 
@@ -354,7 +354,7 @@ _mish_cmd_history(
 MISH_CMD_NAMES(history, "history");
 MISH_CMD_HELP(history,
 		"Display the history of commands.");
-MISH_CMD_REGISTER(history, _mish_cmd_history);
+MISH_CMD_REGISTER_KIND(history, _mish_cmd_history, 0, MISH_CLIENT_CMD_KIND);
 
 
 static void
@@ -380,5 +380,5 @@ _mish_cmd_disconnect(
 MISH_CMD_NAMES(disconnect, "dis", "disconnect", "logout");
 MISH_CMD_HELP(disconnect,
 		"Disconnect this telnet session. If appropriate");
-MISH_CMD_REGISTER(disconnect, _mish_cmd_disconnect);
+MISH_CMD_REGISTER_KIND(disconnect, _mish_cmd_disconnect, 0, MISH_CLIENT_CMD_KIND);
 

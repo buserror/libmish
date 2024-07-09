@@ -2,48 +2,55 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+
+typedef struct _mish_argv_t {
+	char * line;
+	int ac;
+	char * av[0];
+} _mish_argv_t;
 /*
  * Duplicate 'line', split it into words, store word pointers in an array,
  * NULL terminate it. Also return the number of words in the array in argc.
  *
  * The returned value is made of two malloc()ed blocks. use mish_argv_free
  * to free the memory.
- * It's OK to change almost any of the pointers APART from argv[0] which
- * contains the block containing a copy of the original 'line' parameters with
- * \0's replacing spaces.
+ * It's OK to change any of the pointers. But no not try to realloc() the
+ * vector as it hides a structure
  */
 static char **
 mish_argv_make(
 		const char * line,
 		int * argc )
 {
-	char *dup = strdup(line);
-	int i = 0;
-	char ** av = NULL;
-	int skip = 0;
-	int state = 0;
-	char start;
-	enum { s_newarg, s_startarg, s_copyq, s_skip, s_copynq };
+	const char separator = ' ';
+	_mish_argv_t * r = calloc(1, sizeof(*r));
+	r->line = strdup(line);
+	char *dup = r->line;
+	char quote;
+	enum { s_newarg = 0, s_startarg, s_copyquote, s_skip, s_copy };
+	int state = s_newarg;
 	do {
 		switch (state) {
 			case s_newarg:
-				av = realloc(av, (i + 2) * sizeof(char*));
-				while (*dup == ' ')
+				r = realloc(r, sizeof(*r) + ((r->ac + 2) * sizeof(char*)));
+				while (*dup == ' ' || *dup == separator)
 					dup++;
-				av[i++] = dup;
+				r->av[r->ac++] = dup;
 				state = s_startarg;
 				break;
 			case s_startarg:
 				if (*dup == '"' || *dup == '\'') {
-					start = *dup++;
-					state = s_copyq;
+					quote = *dup++;
+					state = s_copyquote;
 				} else
-					state = s_copynq;
+					state = s_copy;
 				break;
-			case s_copyq:
-				if (*dup == '\\')
+			case s_copyquote:
+				if (*dup == '\\') {
 					state = s_skip;
-				else if (*dup == start) {
+					dup++;
+				} else if (*dup == quote) {
 					state = s_newarg;
 					dup++;
 					if (*dup) *dup++ = 0;
@@ -52,12 +59,12 @@ mish_argv_make(
 				break;
 			case s_skip:
 				dup++;
-				state = s_copyq;
+				state = s_copyquote;
 				break;
-			case s_copynq:
+			case s_copy:
 				if (*dup == 0)
 					break;
-				if (*dup != ' ')
+				if (*dup != separator)
 					dup++;
 				else {
 					state = s_newarg;
@@ -66,14 +73,21 @@ mish_argv_make(
 				break;
 		}
 	} while (*dup);
-	av[i] = NULL;
-	*argc = i;
-	return av;
+	r->av[r->ac] = NULL;
+	if (argc)
+		*argc = r->ac;
+	return r->av;
 }
 
 int main() {
 	int argc = 0;
-	char **argv = mish_argv_make("testing \"one escape two\"  ala ", &argc);
+	char **argv = mish_argv_make("testing \"one escape two\"  lala ", &argc);
+
+	printf("argc = %d\n", argc);
+	for (int i = 0; argv[i]; i++)
+		printf("%2d:'%s'\n", i, argv[i]);
+
+	argv = mish_argv_make("command with some \" quoted\\\"words \" should work\n", &argc);
 
 	printf("argc = %d\n", argc);
 	for (int i = 0; argv[i]; i++)
